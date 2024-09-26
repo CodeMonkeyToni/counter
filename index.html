@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+    <head>
+      <title>Counter</title>
+      <link rel="icon" type="image/x-icon" href="logo.ico">
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        * {
+          box-sizing: border-box;
+        }
+
+        body {
+          background-color: gray;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 40px;
+        }
+
+        p {
+          text-align: center;
+        }
+      </style>
+    </head>
+    <body>
+      <script>
+
+        class Button {
+
+          constructor(width, text, backgroundColor, borderColor, cornerRadiusLeftUp, cornerRadiusRightUp, cornerRadiusRightBottom,
+            cornerRadiusLeftBottom, borderRightWidth, borderLeftWidth, parentIndex, ownIndex) {
+              this.width = width;
+              this.text = text;
+              this.backgroundColor = backgroundColor;
+              this.borderColor = borderColor;
+              this.cornerRadiusLeftUp = cornerRadiusLeftUp;
+              this.cornerRadiusRightUp = cornerRadiusRightUp;
+              this.cornerRadiusRightBottom = cornerRadiusRightBottom;
+              this.cornerRadiusLeftBottom = cornerRadiusLeftBottom;
+              this.borderRightWidth = borderRightWidth;
+              this.borderLeftWidth = borderLeftWidth;
+              this.div = document.createElement("div");  //This div = button.
+              this.p = document.createElement("p");
+              this.parentIndex = parentIndex;
+              this.ownIndex = ownIndex;
+
+              this.addStyle();
+              this.addText();
+              this.div.addEventListener("click", () => {
+                if ((this.ownIndex == 0 || this.ownIndex == 1 || 
+                this.ownIndex == 3 || this.ownIndex == 4) && !middleButtonIsPressed)  {  //If a button with a number is pressed
+                  changeValue(this.parentIndex, this.ownIndex);
+                  saveData();
+                  audio.play();
+                } 
+                else if ((this.ownIndex == 2) && !middleButtonIsPressed) {  //If the button in the middle is pressed...
+                  //buttonDownTime = Date.now();
+                  //setTimeout(() => {
+                  //  if (Date.now() - buttonDownTime >= 1000  && Date.now() - buttonDownTime <= 60000) {  //...and held down for more than a second
+                      audio.play();
+                      middleButtonPressed(this.parentIndex);
+                  //  }
+                  //}, 1001);
+                }
+                else if ((this.ownIndex == "add") && (amountOfCounters == 3) && !middleButtonIsPressed) {  //If add a counter is pressed and there are too many counters already
+                  audio.play();
+                  alert("3 is maximum!")
+                }
+                else if ((this.ownIndex == "add") && (!middleButtonIsPressed)) {  //If add a counter is pressed and there is still room
+                  audio.play();
+                  addCounter();
+                  saveData();
+                }
+                else if (this.ownIndex == "back") {
+                  audio.play();
+                  middleButtonIsPressed = false;
+                  document.getElementById("options").remove();
+                  resetColors();
+                }
+                else if (this.ownIndex == "zero") {
+                  audio.play();
+                  middleButtonIsPressed = false;
+                  document.getElementById("options").remove();
+                  resetColors();
+                  changeValue(this.parentIndex, this.ownIndex);
+                  saveData();
+                }
+                else if (this.ownIndex == "remove") {
+                  audio.play();
+                  middleButtonIsPressed = false;
+                  backgroundColors.push(arrayOfButtonGroups[this.parentIndex].backgroundColor);
+                  borderColors.push(arrayOfButtonGroups[this.parentIndex].borderColor);
+                  document.getElementById("options").remove();
+                  resetColors();
+                  amountOfCounters--;
+                  for (let i = 1; i <= 2; i++) {  //parentIndexes of remaining buttons and indexes of remaining buttonGroups are fixed here
+                    if (arrayOfButtonGroups[this.parentIndex+i]) {
+                      arrayOfButtonGroups[this.parentIndex+i].index--;
+                      for (let j = 0; j <= 4; j++) {
+                        arrayOfButtonGroups[this.parentIndex+i].arrayOfButtons[j].parentIndex--;
+                      }
+                    }
+                  }
+                  arrayOfButtonGroups[this.parentIndex].div.remove();
+                  arrayOfButtonGroups.splice(this.parentIndex, 1);
+                  saveData();
+                }
+              });
+
+              /*this.div.addEventListener("mouseup", () => {
+                buttonDownTime = 0;
+              });
+
+              this.div.addEventListener("mouseleave", () => {
+                buttonDownTime = 0;
+              });*/
+            }
+
+            addStyle() {
+              this.div.style.display = "flex";
+              this.div.style.width = this.width;
+              this.div.style.height = "70px";
+              this.div.style.backgroundColor = this.backgroundColor;
+              this.div.style.border = "2px solid";
+              this.div.style.borderRightWidth = this.borderRightWidth;
+              this.div.style.borderLeftWidth = this.borderLeftWidth;
+              this.div.style.borderColor = this.borderColor;
+              this.div.style.borderTopLeftRadius = this.cornerRadiusLeftUp;
+              this.div.style.borderTopRightRadius = this.cornerRadiusRightUp;
+              this.div.style.borderBottomRightRadius = this.cornerRadiusRightBottom;
+              this.div.style.borderBottomLeftRadius = this.cornerRadiusLeftBottom;
+              this.div.style.fontFamily = "Georgia";
+              this.div.style.fontSize = "20px";
+              this.div.style.justifyContent = "center";
+              this.div.style.alignItems = "center";
+              this.div.style.cursor = "pointer";
+            }
+
+            addText() {
+              this.p.innerHTML = this.text;
+              this.div.appendChild(this.p);
+            }
+
+            changeText(text) {
+              this.text = text;
+              this.p.innerHTML = this.text;
+            }
+
+            getButton() {
+              return this.div;
+            }
+        }
+
+        class FiveButtons {
+
+          constructor(text, backgroundColor, borderColor, index, amount) {
+            this.amount = amount;
+            this.label = text;
+            this.text = `${this.label} <br> ${this.amount}`;
+            this.backgroundColor = backgroundColor;
+            this.borderColor = borderColor;
+            this.div = document.createElement("div");  // This div holds the five buttons.
+            this.index = index;
+            this.arrayOfButtons = [];
+
+            this.addStyle();
+            this.addFiveButtons();
+          }
+
+          addStyle() {
+            this.div.style.display = "flex";
+            this.div.style.width = "100%";
+            this.div.style.justifyContent = "center";
+            //this.div.style.margin = "40px";
+          }
+
+          addFiveButtons() {
+            this.button1 = new Button("60px", "-10", this.backgroundColor, this.borderColor, "35px", "0px", "0px", "35px", "1px", "2px", this.index, 0);
+            this.div.appendChild(this.button1.getButton());
+            this.arrayOfButtons.push(this.button1);
+
+            this.button2 = new Button("60px", "-1", this.backgroundColor, this.borderColor, "0px", "0px", "0px", "0px", "1px", "1px", this.index, 1);
+            this.div.appendChild(this.button2.getButton());
+            this.arrayOfButtons.push(this.button2);
+
+            this.button3 = new Button("140px", this.text, this.backgroundColor, this.borderColor, "0px", "0px", "0px", "0px", "1px", "1px", this.index, 2);
+            this.div.appendChild(this.button3.getButton());
+            this.arrayOfButtons.push(this.button3);
+
+            this.button4 = new Button("60px", "+1", this.backgroundColor, this.borderColor, "0px", "0px", "0px", "0px", "1px", "1px", this.index, 3);
+            this.div.appendChild(this.button4.getButton());
+            this.arrayOfButtons.push(this.button4);
+
+            this.button5 = new Button("60px", "+10", this.backgroundColor, this.borderColor, "0px", "35px", "35px", "0px", "2px", "1px", this.index, 4);
+            this.div.appendChild(this.button5.getButton());
+            this.arrayOfButtons.push(this.button5);
+          }
+
+          getFiveButtons() {
+            return this.div;
+          }
+        }
+
+        class AddButton {
+
+          constructor() {
+            this.button = new Button("70px", "", "#a3b8ff", "#000", "5px", "5px", "5px", "5px", "2px", "2px", undefined, "add");
+            addImage(this.button, "plus");
+            document.body.appendChild(this.button.getButton());
+          }
+        }
+
+        class OptionButtons {
+
+          constructor(parentIndex) {
+            this.div = document.createElement("div");
+            this.div.id = "options";
+            this.div.style.display = "flex";
+            this.div.style.gap = "20px";
+            this.parentIndex = parentIndex;
+            this.backButton = new Button("70px", "", "#a3b8ff", "#000", "5px", "5px", "5px", "5px", "2px", "2px", this.parentIndex, "back");
+            addImage(this.backButton, "back");
+            //this.backButton.div.style.margin = "20px";
+            this.zeroButton = new Button("70px", "", "#a3b8ff", "#000", "5px", "5px", "5px", "5px", "2px", "2px", this.parentIndex, "zero");
+            addImage(this.zeroButton, "zero");
+            //this.zeroButton.div.style.margin = "20px";
+            this.removeButton = new Button("70px", "", "#a3b8ff", "#000", "5px", "5px", "5px", "5px", "2px", "2px", this.parentIndex, "remove");
+            addImage(this.removeButton, "remove");
+            //this.removeButton.div.style.margin = "20px";
+            this.div.appendChild(this.backButton.getButton());
+            this.div.appendChild(this.zeroButton.getButton());
+            this.div.appendChild(this.removeButton.getButton());
+            document.body.appendChild(this.div);
+          }
+        }
+
+        function addImage(button, imagetype) {
+          let img = document.createElement("img");
+          switch (imagetype) {
+            case "back":
+              img.src = "back arrow.svg";
+              break;
+            case "zero":
+              img.src = "zero.svg";
+              break;
+            case "remove":
+              img.src = "trash.svg";
+              break;
+            case "plus":
+              img.src = "plus.svg";
+              break;
+          }
+          img.style.width = "50px";
+          img.style.height = "50px";
+          button.div.appendChild(img);
+        }
+
+        function changeValue(parentIndex, ownIndex) {
+          switch (ownIndex) {
+            case 0: 
+              arrayOfButtonGroups[parentIndex].amount -= 10;
+              break;
+            case 1: 
+              arrayOfButtonGroups[parentIndex].amount -= 1;
+              break;
+            case 3: 
+              arrayOfButtonGroups[parentIndex].amount += 1;
+              break;
+            case 4: 
+              arrayOfButtonGroups[parentIndex].amount += 10;
+              break;
+            case "zero":
+              arrayOfButtonGroups[parentIndex].amount = 0;
+          }
+          arrayOfButtonGroups[parentIndex].text = `${arrayOfButtonGroups[parentIndex].label} <br> ${arrayOfButtonGroups[parentIndex].amount}`;
+          arrayOfButtonGroups[parentIndex].arrayOfButtons[2].p.innerHTML = arrayOfButtonGroups[parentIndex].text; 
+        }
+
+        function addCounter() {
+          let counterName = prompt("Counter name:", "");
+          if (counterName != null) {
+            let buttonGroup = new FiveButtons(counterName, backgroundColors.shift(), borderColors.shift(), amountOfCounters, 0);
+            document.body.appendChild(buttonGroup.getFiveButtons());
+            arrayOfButtonGroups.push(buttonGroup);
+            amountOfCounters++;            
+          }
+
+          /*let buttonGroup2 = new FiveButtons("Punnerrukset", "#ff5922", "#993d19", 1);
+          document.body.appendChild(buttonGroup2.getFiveButtons());
+          arrayOfButtonGroups.push(buttonGroup2);
+
+          let buttonGroup3 = new FiveButtons("Leuat", "#22f8ff", "#198899", 2);
+          document.body.appendChild(buttonGroup3.getFiveButtons());
+          arrayOfButtonGroups.push(buttonGroup3);*/
+        }
+
+        function middleButtonPressed(parentIndex) {
+          middleButtonIsPressed = true;
+          arrayOfButtonGroups[parentIndex].div.style.opacity = "0.3";
+          let optionButtons = new OptionButtons(parentIndex);
+        }
+
+        function resetColors() {
+          for (let i=0; i<=2; i++) {
+            if (arrayOfButtonGroups[i]) {
+              arrayOfButtonGroups[i].div.style.opacity = "1";
+            }
+          }
+        }
+
+        function saveData() {
+          savedData = JSON.stringify(arrayOfButtonGroups, null, 2);
+          //alert(savedData);
+          localStorage.setItem("buttonGroups", savedData);
+          //alert(localStorage.getItem("buttonGroups"));
+          localStorage.setItem("counterAmount", amountOfCounters);
+          //alert(localStorage.getItem("counterAmount"));
+          localStorage.setItem("bgColors", JSON.stringify(backgroundColors));
+          //alert(localStorage.getItem("bgColors"));
+          localStorage.setItem("bdColors", JSON.stringify(borderColors));
+          //alert(localStorage.getItem("bdColors"));
+        }
+
+        function loadData() {
+          loadedAmountOfCounters = localStorage.getItem("counterAmount") ? localStorage.getItem("counterAmount") : 0;
+          loadedArrayOfButtonGroups = localStorage.getItem("buttonGroups") ? JSON.parse(localStorage.getItem("buttonGroups")) : [];
+          loadedBackgroundColors = localStorage.getItem("bgColors") ? JSON.parse(localStorage.getItem("bgColors")) : ["#ff5922", "#22f8ff", "#ff228d"];
+          loadedBorderColors = localStorage.getItem("bdColors") ? JSON.parse(localStorage.getItem("bdColors")) : ["#993d19", "#198899", "#821746"];
+        }
+
+        function constructFromLoadedData() {
+          for (let i = 0; i < loadedAmountOfCounters; i++) {
+            let buttonGroup = new FiveButtons(loadedArrayOfButtonGroups[i].label, backgroundColors.shift(), borderColors.shift(), amountOfCounters, loadedArrayOfButtonGroups[i].amount);
+            document.body.appendChild(buttonGroup.getFiveButtons());
+            arrayOfButtonGroups.push(buttonGroup);
+            amountOfCounters++;    
+          }
+        }
+
+        let savedData = "";
+        let addButton = new AddButton(); //Creates the "Add a counter" -button.
+        let middleButtonIsPressed = false;
+        let buttonDownTime = 0;
+        let loadedAmountOfCounters = 0;
+        let loadedArrayOfButtonGroups = [];
+        let loadedBackgroundColors = ["#ff5922", "#22f8ff", "#ff228d"];
+        let loadedBorderColors = ["#993d19", "#198899", "#821746"];
+        let audio = new Audio("click.wav");
+        loadData();
+        amountOfCounters = 0;
+        const arrayOfButtonGroups = [];
+        const backgroundColors = ["#ff5922", "#22f8ff", "#ff228d"];
+        const borderColors = ["#993d19", "#198899", "#821746"];
+        constructFromLoadedData();     
+        
+        //test();
+        //green background "#8dff22", green border "#457d20"
+
+        function test() { //For testing only.
+          testParagraph = document.createElement("p");
+          testParagraph.innerHTML = arrayOfButtonGroups[0].arrayOfButtons[1].ownIndex;
+          document.body.appendChild(testParagraph);
+        }
+      
+      </script>
+    </body>
+</html>
